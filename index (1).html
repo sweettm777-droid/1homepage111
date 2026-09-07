@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>사다리타기</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
+<style>
+  :root{ color-scheme: light dark; }
+  *{box-sizing:border-box;}
+  body{margin:0;}
+  img{max-width:100%;}
+  [hidden]{display:none !important;}
+
+  :root{
+    --bg:#EDEAE0;
+    --paper:#FFFFFF;
+    --grid-line:#DAD5C6;
+    --ink:#2B2A28;
+    --muted:#706C60;
+    --accent:#D64545;
+    --accent-soft:#F5DEDC;
+    --accent-2:#2F6F4F;
+    --accent-2-soft:#DCEBE2;
+    --path-blue:#3D6FB4;
+    --path-gold:#A8781F;
+    --rail:#B8B4A6;
+    --rung:#8B8677;
+    --shadow:rgba(43,42,40,0.14);
+    --focus:#2F6F4F;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#152420;
+      --paper:#1E332C;
+      --grid-line:#2C4136;
+      --ink:#ECE7D8;
+      --muted:#9DAA9F;
+      --accent:#FF7A67;
+      --accent-soft:#3B2621;
+      --accent-2:#7FD9A6;
+      --accent-2-soft:#1E3A2C;
+      --path-blue:#7FB2FF;
+      --path-gold:#E3B75B;
+      --rail:#4C6459;
+      --rung:#6E8A7B;
+      --shadow:rgba(0,0,0,0.45);
+      --focus:#7FD9A6;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#152420;
+    --paper:#1E332C;
+    --grid-line:#2C4136;
+    --ink:#ECE7D8;
+    --muted:#9DAA9F;
+    --accent:#FF7A67;
+    --accent-soft:#3B2621;
+    --accent-2:#7FD9A6;
+    --accent-2-soft:#1E3A2C;
+    --path-blue:#7FB2FF;
+    --path-gold:#E3B75B;
+    --rail:#4C6459;
+    --rung:#6E8A7B;
+    --shadow:rgba(0,0,0,0.45);
+    --focus:#7FD9A6;
+  }
+
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Noto Sans KR', system-ui, -apple-system, 'Malgun Gothic', sans-serif;
+    padding:32px 16px 64px;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{transition-duration:0.01ms !important; animation-duration:0.01ms !important;}
+  }
+
+  .wrap{max-width:920px;margin:0 auto;}
+
+  header.hero{margin-bottom:22px;}
+  header.hero h1{
+    font-family:'Gaegu','Noto Sans KR',cursive,sans-serif;
+    font-weight:700;
+    font-size:clamp(34px,6vw,48px);
+    margin:0 0 4px;
+    color:var(--ink);
+    text-wrap:balance;
+    position:relative;
+    display:inline-block;
+  }
+  header.hero h1 .scribble{
+    position:absolute;
+    left:-4px; right:-4px; bottom:-6px;
+    height:10px;
+    background:var(--accent);
+    opacity:0.35;
+    border-radius:6px;
+    transform:rotate(-1deg);
+    z-index:-1;
+  }
+  header.hero p{
+    margin:10px 0 0;
+    color:var(--muted);
+    font-size:15px;
+    max-width:60ch;
+    line-height:1.6;
+  }
+
+  .toolbar{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+    padding:12px 14px;
+    background:var(--paper);
+    border:1px solid var(--grid-line);
+    border-radius:14px;
+    box-shadow:0 2px 10px var(--shadow);
+  }
+  .stepper{
+    display:flex;
+    align-items:center;
+    gap:2px;
+    background:var(--bg);
+    border:1px solid var(--grid-line);
+    border-radius:10px;
+    padding:3px;
+  }
+  .stepper span.stepper-label{
+    font-size:12px;
+    color:var(--muted);
+    padding:0 8px 0 6px;
+    white-space:nowrap;
+  }
+  .stepper button{
+    width:30px;height:30px;
+    border-radius:8px;
+    border:none;
+    background:transparent;
+    color:var(--ink);
+    font-size:16px;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .stepper button:hover:not(:disabled){background:var(--grid-line);}
+  .stepper button:disabled{opacity:0.35;cursor:not-allowed;}
+  .stepper .count{
+    min-width:22px;
+    text-align:center;
+    font-weight:700;
+    font-variant-numeric:tabular-nums;
+  }
+
+  button.btn{
+    border:1px solid var(--grid-line);
+    background:var(--paper);
+    color:var(--ink);
+    font-family:inherit;
+    font-size:13.5px;
+    font-weight:500;
+    padding:9px 14px;
+    border-radius:10px;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  button.btn:hover{border-color:var(--accent);}
+  button.btn.primary{
+    background:var(--accent);
+    border-color:var(--accent);
+    color:#fff;
+    font-weight:700;
+  }
+  button.btn.primary:hover{filter:brightness(1.06);}
+  button.btn.ghost{background:transparent;}
+  button:focus-visible, input:focus-visible{
+    outline:2.5px solid var(--focus);
+    outline-offset:2px;
+  }
+
+  .progress{
+    margin-left:auto;
+    font-size:13px;
+    color:var(--muted);
+    font-variant-numeric:tabular-nums;
+    white-space:nowrap;
+  }
+  .progress b{color:var(--ink);}
+
+  .banner{
+    margin:0 0 16px;
+    padding:11px 16px;
+    background:var(--accent-2-soft);
+    color:var(--accent-2);
+    border-radius:10px;
+    font-size:13.5px;
+    font-weight:700;
+    display:none;
+  }
+  .banner.show{display:block;}
+
+  .board-card{
+    background:var(--paper);
+    border:1px solid var(--grid-line);
+    border-radius:16px;
+    padding:20px 18px 22px;
+    box-shadow:0 4px 16px var(--shadow);
+    background-image:
+      repeating-linear-gradient(0deg, var(--grid-line) 0 1px, transparent 1px 28px),
+      repeating-linear-gradient(90deg, var(--grid-line) 0 1px, transparent 1px 28px);
+    background-size:28px 28px;
+    background-position:center top;
+    background-blend-mode:normal;
+    background-color:var(--paper);
+    position:relative;
+  }
+  .board-card::before{
+    content:"";
+    position:absolute; inset:0;
+    background:var(--paper);
+    opacity:0.86;
+    border-radius:16px;
+    pointer-events:none;
+  }
+  .board-scroll{
+    overflow-x:auto;
+    position:relative;
+    padding-bottom:4px;
+  }
+  .board-inner{
+    position:relative;
+  }
+
+  .col-row{display:flex;}
+  .col{flex:0 0 auto; padding:0 6px; display:flex; flex-direction:column; align-items:center;}
+
+  .name-input, .result-input{
+    width:100%;
+    text-align:center;
+    font-family:inherit;
+    font-size:13px;
+    font-weight:500;
+    color:var(--ink);
+    background:var(--bg);
+    border:1px solid var(--grid-line);
+    border-radius:8px;
+    padding:7px 4px;
+  }
+  .result-input.hit{
+    border-color:var(--pcolor,var(--accent-2));
+    background:color-mix(in srgb, var(--pcolor,var(--accent-2)) 16%, var(--bg));
+    font-weight:700;
+  }
+
+  .pin-row{margin:12px 0 2px;}
+  .pin{
+    width:34px;height:34px;
+    border-radius:50%;
+    border:2px solid var(--rail);
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Noto Sans KR',sans-serif;
+    font-weight:700;
+    font-size:13px;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    transition:transform .15s ease, border-color .15s ease, background .15s ease;
+  }
+  .pin:hover:not(:disabled){transform:translateY(-2px); border-color:var(--accent);}
+  .pin:disabled{cursor:default; transform:none;}
+  .pin.done{
+    background:var(--pcolor,var(--accent-2));
+    border-color:var(--pcolor,var(--accent-2));
+    color:#fff;
+  }
+  .tag{
+    margin-top:6px;
+    font-size:11px;
+    color:var(--pcolor,var(--accent-2));
+    font-weight:700;
+    min-height:14px;
+    text-align:center;
+    max-width:80px;
+    overflow-wrap:break-word;
+  }
+
+  svg.ladder{display:block; overflow:visible;}
+  .rail{stroke:var(--rail); stroke-width:2;}
+  .rung{stroke:var(--rung); stroke-width:2.5; stroke-linecap:round;}
+  .trace{fill:none; stroke-width:4.5; stroke-linecap:round; stroke-linejoin:round;}
+
+  footer.note{
+    margin-top:18px;
+    color:var(--muted);
+    font-size:12.5px;
+    line-height:1.7;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="hero">
+    <h1>사다리타기<span class="scribble" aria-hidden="true"></span></h1>
+    <p>이름과 결과를 입력하고, 출발점을 눌러 사다리를 타 보세요. 발표 순서 정하기, 청소 당번 뽑기, 조 편성처럼 공정하게 정해야 할 때 바로 쓸 수 있어요.</p>
+  </header>
+
+  <div class="toolbar">
+    <div class="stepper">
+      <span class="stepper-label">인원</span>
+      <button type="button" id="btn-minus" aria-label="인원 줄이기">−</button>
+      <span class="count" id="count-display">4</span>
+      <button type="button" id="btn-plus" aria-label="인원 늘리기">+</button>
+    </div>
+    <button type="button" class="btn primary" id="btn-new-ladder">새 사다리 만들기</button>
+    <button type="button" class="btn" id="btn-reveal-all">전체 결과 보기</button>
+    <button type="button" class="btn ghost" id="btn-reset">이름 초기화</button>
+    <span class="progress" id="progress-text"><b>0</b> / 4 공개</span>
+  </div>
+
+  <div class="banner" id="banner">모든 결과가 공개됐어요! 다시 하려면 '새 사다리 만들기'를 눌러주세요.</div>
+
+  <div class="board-card">
+    <div class="board-scroll">
+      <div class="board-inner" id="board-inner">
+        <!-- built by JS -->
+      </div>
+    </div>
+  </div>
+
+  <footer class="note">출발점(●)을 누르면 그 사람의 경로가 사다리를 따라 내려가며 결과가 정해져요. 이름과 결과 칸은 직접 편집할 수 있어요.</footer>
+</div>
+
+<script>
+(function(){
+  var COL_W = 90;
+  var ROW_H = 26;
+  var PAD_TOP = 6;
+  var PAD_BOTTOM = 6;
+  var MIN_N = 2, MAX_N = 8;
+  var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var PALETTE = ['--accent','--accent-2','--path-blue','--path-gold'];
+
+  var state = {
+    n: 4,
+    names: [],
+    results: [],
+    rows: 0,
+    rungs: [],
+    revealed: {} // startCol -> {endCol, colorVar}
+  };
+
+  function defaultNames(n){
+    var out = [];
+    for (var i=0;i<n;i++) out.push('참가자 ' + (i+1));
+    return out;
+  }
+  function defaultResults(n){
+    var letters = 'ABCDEFGH';
+    var out = [];
+    for (var i=0;i<n;i++) out.push('결과 ' + letters[i]);
+    return out;
+  }
+
+  function rowsFor(n){
+    return Math.max(9, Math.min(18, n*3));
+  }
+
+  function generateRungs(n, rows){
+    var attempt, matrix, total;
+    for (attempt=0; attempt<6; attempt++){
+      matrix = [];
+      total = 0;
+      for (var r=0;r<rows;r++){
+        var line = new Array(Math.max(0,n-1)).fill(false);
+        var i = 0;
+        while (i < n-1){
+          if (Math.random() < 0.36){
+            line[i] = true;
+            total++;
+            i += 2;
+          } else {
+            i += 1;
+          }
+        }
+        matrix.push(line);
+      }
+      if (total >= n || n < 2) break;
+    }
+    return matrix;
+  }
+
+  function colX(i){ return i*COL_W + COL_W/2; }
+
+  function tracePath(startCol, rows, rungs, n){
+    var pos = startCol;
+    var pts = [{x: colX(pos), y: 0}];
+    for (var r=0; r<rows; r++){
+      var yMid = r*ROW_H + ROW_H/2;
+      if (pos < n-1 && rungs[r][pos]){
+        pts.push({x: colX(pos), y: yMid});
+        pts.push({x: colX(pos+1), y: yMid});
+        pos = pos + 1;
+      } else if (pos > 0 && rungs[r][pos-1]){
+        pts.push({x: colX(pos), y: yMid});
+        pts.push({x: colX(pos-1), y: yMid});
+        pos = pos - 1;
+      }
+    }
+    pts.push({x: colX(pos), y: rows*ROW_H});
+    return {points: pts, endCol: pos};
+  }
+
+  function pointsToPath(pts){
+    var d = 'M ' + pts[0].x + ' ' + pts[0].y;
+    for (var i=1;i<pts.length;i++) d += ' L ' + pts[i].x + ' ' + pts[i].y;
+    return d;
+  }
+
+  function svgNS(tag){ return document.createElementNS('http://www.w3.org/2000/svg', tag); }
+
+  var els = {};
+
+  function buildBoard(){
+    var inner = document.getElementById('board-inner');
+    inner.innerHTML = '';
+    els.nameInputs = [];
+    els.resultInputs = [];
+    els.pins = [];
+    els.tags = [];
+
+    var width = state.n * COL_W;
+
+    // name row
+    var nameRow = document.createElement('div');
+    nameRow.className = 'col-row';
+    nameRow.style.width = width + 'px';
+    for (var i=0;i<state.n;i++){
+      var col = document.createElement('div');
+      col.className = 'col';
+      col.style.width = COL_W + 'px';
+      var input = document.createElement('input');
+      input.className = 'name-input';
+      input.value = state.names[i];
+      input.setAttribute('aria-label', (i+1) + '번 참가자 이름');
+      input.maxLength = 12;
+      (function(idx){
+        input.addEventListener('input', function(){ state.names[idx] = input.value || ('참가자 ' + (idx+1)); });
+      })(i);
+      col.appendChild(input);
+      nameRow.appendChild(col);
+      els.nameInputs.push(input);
+    }
+    inner.appendChild(nameRow);
+
+    // pin row
+    var pinRow = document.createElement('div');
+    pinRow.className = 'col-row pin-row';
+    pinRow.style.width = width + 'px';
+    for (var i=0;i<state.n;i++){
+      var col2 = document.createElement('div');
+      col2.className = 'col';
+      col2.style.width = COL_W + 'px';
+      var pin = document.createElement('button');
+      pin.type = 'button';
+      pin.className = 'pin';
+      pin.textContent = '●';
+      pin.setAttribute('aria-label', (i+1) + '번 출발');
+      (function(idx){
+        pin.addEventListener('click', function(){ startTrace(idx); });
+      })(i);
+      var tag = document.createElement('div');
+      tag.className = 'tag';
+      col2.appendChild(pin);
+      col2.appendChild(tag);
+      pinRow.appendChild(col2);
+      els.pins.push(pin);
+      els.tags.push(tag);
+    }
+    inner.appendChild(pinRow);
+
+    // svg
+    state.rows = rowsFor(state.n);
+    state.rungs = generateRungs(state.n, state.rows);
+    var svgHeight = state.rows*ROW_H + PAD_TOP + PAD_BOTTOM;
+    var svg = svgNS('svg');
+    svg.setAttribute('class','ladder');
+    svg.setAttribute('width', width);
+    svg.setAttribute('height', svgHeight);
+    svg.setAttribute('viewBox', '0 0 ' + width + ' ' + svgHeight);
+
+    var g = svgNS('g');
+    g.setAttribute('transform', 'translate(0,' + PAD_TOP + ')');
+
+    for (var c=0;c<state.n;c++){
+      var rail = svgNS('line');
+      rail.setAttribute('class','rail');
+      rail.setAttribute('x1', colX(c)); rail.setAttribute('x2', colX(c));
+      rail.setAttribute('y1', 0); rail.setAttribute('y2', state.rows*ROW_H);
+      g.appendChild(rail);
+    }
+    for (var r=0;r<state.rows;r++){
+      for (var c2=0;c2<state.n-1;c2++){
+        if (state.rungs[r][c2]){
+          var yMid = r*ROW_H + ROW_H/2;
+          var rung = svgNS('line');
+          rung.setAttribute('class','rung');
+          rung.setAttribute('x1', colX(c2)); rung.setAttribute('x2', colX(c2+1));
+          rung.setAttribute('y1', yMid); rung.setAttribute('y2', yMid);
+          g.appendChild(rung);
+        }
+      }
+    }
+    var traceLayer = svgNS('g');
+    traceLayer.setAttribute('id','trace-layer');
+    g.appendChild(traceLayer);
+    svg.appendChild(g);
+
+    var svgWrap = document.createElement('div');
+    svgWrap.style.width = width + 'px';
+    svgWrap.appendChild(svg);
+    inner.appendChild(svgWrap);
+    els.svg = svg;
+    els.traceLayer = traceLayer;
+
+    // result row
+    var resRow = document.createElement('div');
+    resRow.className = 'col-row';
+    resRow.style.width = width + 'px';
+    resRow.style.marginTop = '10px';
+    for (var i2=0;i2<state.n;i2++){
+      var col3 = document.createElement('div');
+      col3.className = 'col';
+      col3.style.width = COL_W + 'px';
+      var rinput = document.createElement('input');
+      rinput.className = 'result-input';
+      rinput.value = state.results[i2];
+      rinput.setAttribute('aria-label', (i2+1) + '번 결과');
+      rinput.maxLength = 12;
+      (function(idx){
+        rinput.addEventListener('input', function(){
+          state.results[idx] = rinput.value || ('결과 ' + (idx+1));
+          refreshTags();
+        });
+      })(i2);
+      col3.appendChild(rinput);
+      resRow.appendChild(col3);
+      els.resultInputs.push(rinput);
+    }
+    inner.appendChild(resRow);
+
+    state.revealed = {};
+    updateProgress();
+    document.getElementById('banner').classList.remove('show');
+  }
+
+  function refreshTags(){
+    Object.keys(state.revealed).forEach(function(startColStr){
+      var startCol = parseInt(startColStr,10);
+      var info = state.revealed[startCol];
+      els.tags[startCol].textContent = '→ ' + state.results[info.endCol];
+    });
+  }
+
+  function updateProgress(){
+    var done = Object.keys(state.revealed).length;
+    document.getElementById('progress-text').innerHTML = '<b>' + done + '</b> / ' + state.n + ' 공개';
+    if (done === state.n && state.n > 0){
+      document.getElementById('banner').classList.add('show');
+    }
+  }
+
+  function startTrace(startCol){
+    if (state.revealed[startCol]) return;
+    els.pins[startCol].disabled = true;
+
+    var result = tracePath(startCol, state.rows, state.rungs, state.n);
+    var colorVar = PALETTE[startCol % PALETTE.length];
+    var colorValue = getComputedStyle(document.documentElement).getPropertyValue(colorVar).trim();
+
+    var path = svgNS('path');
+    path.setAttribute('class','trace');
+    path.setAttribute('d', pointsToPath(result.points));
+    path.setAttribute('stroke', colorValue);
+    els.traceLayer.appendChild(path);
+
+    function finish(){
+      state.revealed[startCol] = {endCol: result.endCol, colorVar: colorVar};
+      els.pins[startCol].classList.add('done');
+      els.pins[startCol].style.setProperty('--pcolor', colorValue);
+      els.pins[startCol].textContent = '✓';
+      els.tags[startCol].style.setProperty('--pcolor', colorValue);
+      els.tags[startCol].textContent = '→ ' + state.results[result.endCol];
+      var rinput = els.resultInputs[result.endCol];
+      rinput.classList.add('hit');
+      rinput.style.setProperty('--pcolor', colorValue);
+      updateProgress();
+    }
+
+    if (reduced){
+      finish();
+      return;
+    }
+
+    var len = path.getTotalLength();
+    path.style.strokeDasharray = len;
+    path.style.strokeDashoffset = len;
+    // force reflow
+    path.getBoundingClientRect();
+    var duration = Math.min(1800, 600 + state.rows*45);
+    path.style.transition = 'stroke-dashoffset ' + duration + 'ms ease-in-out';
+    requestAnimationFrame(function(){
+      path.style.strokeDashoffset = '0';
+    });
+    setTimeout(finish, duration + 40);
+  }
+
+  function revealAllRemaining(){
+    var delay = 0;
+    for (var i=0;i<state.n;i++){
+      if (!state.revealed[i]){
+        (function(idx, d){
+          setTimeout(function(){ startTrace(idx); }, d);
+        })(i, delay);
+        delay += reduced ? 0 : 140;
+      }
+    }
+  }
+
+  function setCount(n){
+    n = Math.max(MIN_N, Math.min(MAX_N, n));
+    if (n === state.n && state.names.length === n) { buildBoard(); return; }
+    while (state.names.length < n){
+      state.names.push('참가자 ' + (state.names.length+1));
+      var letters = 'ABCDEFGH';
+      state.results.push('결과 ' + (letters[state.results.length] || (state.results.length+1)));
+    }
+    state.names.length = n;
+    state.results.length = n;
+    state.n = n;
+    document.getElementById('count-display').textContent = n;
+    document.getElementById('btn-minus').disabled = n<=MIN_N;
+    document.getElementById('btn-plus').disabled = n>=MAX_N;
+    buildBoard();
+  }
+
+  document.getElementById('btn-minus').addEventListener('click', function(){ setCount(state.n-1); });
+  document.getElementById('btn-plus').addEventListener('click', function(){ setCount(state.n+1); });
+  document.getElementById('btn-new-ladder').addEventListener('click', function(){ buildBoard(); });
+  document.getElementById('btn-reveal-all').addEventListener('click', revealAllRemaining);
+  document.getElementById('btn-reset').addEventListener('click', function(){
+    state.names = defaultNames(state.n);
+    state.results = defaultResults(state.n);
+    buildBoard();
+  });
+
+  // init
+  state.names = defaultNames(state.n);
+  state.results = defaultResults(state.n);
+  document.getElementById('btn-minus').disabled = state.n<=MIN_N;
+  document.getElementById('btn-plus').disabled = state.n>=MAX_N;
+  buildBoard();
+})();
+</script>
+</body>
+</html>
